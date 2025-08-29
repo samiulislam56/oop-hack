@@ -1,0 +1,128 @@
+//ProductDao
+
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
+package edu.diu;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ *
+ * @author LENOVO
+ */
+public class ProductDao {
+
+    String url = "jdbc:sqlite:store.db?busy_timeout=5000";
+
+    String creatTablesql = "CREATE TABLE IF NOT EXISTS products(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT,price REAL)";
+    String insertsql = "INSERT INTO products(name,price) VALUES(?,?)";
+    String updatesql = "UPDATE products set name=?,price=? WHERE id=?";
+
+    public Connection getConnection() {
+        Connection con = null;
+        try {
+            Class.forName("org.sqlite.JDBC");
+            con = DriverManager.getConnection(url);
+        } catch (ClassNotFoundException ex) {
+            System.getLogger(ProductDao.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+        } catch (SQLException ex) {
+            System.getLogger(ProductDao.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+        }
+        return con;
+    }
+
+    public void createTable() {
+
+        try {
+            getConnection().createStatement().execute(creatTablesql);
+        } catch (SQLException ex) {
+            System.getLogger(ProductDao.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+        }
+
+    }
+
+    public void insertProduct(Product p) {
+        try {
+            PreparedStatement ps = getConnection().prepareStatement(insertsql);
+            ps.setString(1, p.getName());
+            ps.setDouble(2, p.getPrice());
+            ps.executeUpdate();
+            ps.close();
+        } catch (SQLException ex) {
+            System.getLogger(ProductDao.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+        }
+
+    }
+
+    public List selectAll() {
+
+        List<Product> products = new ArrayList();
+        try {
+            Statement stm = getConnection().createStatement();
+            ResultSet rsm = stm.executeQuery("Select * from products");
+            while (rsm.next()) {
+                int id = rsm.getInt("id");
+                String name = rsm.getString("name");
+                double price = rsm.getDouble("price");
+                products.add(new Product(id, name, price));
+            }
+        } catch (SQLException ex) {
+            System.getLogger(ProductDao.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+        }
+        return products;
+    }
+
+    public Product selectProduct(int id) {
+
+        Product p = null;
+        try {
+            Statement stm = getConnection().createStatement();
+
+            ResultSet rsm = stm.executeQuery("Select * from products where id=" + id);
+
+            if (rsm.next()) {
+
+                String name = rsm.getString("name");
+                double price = rsm.getDouble("price");
+                p = new Product(id, name, price);
+            }
+        } catch (SQLException ex) {
+            System.getLogger(ProductDao.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+        }
+        return p;
+    }
+
+    public void updateProduct(Product p) {
+        try {
+            PreparedStatement ps = getConnection().prepareStatement(updatesql);
+            ps.setString(1, p.getName());
+            ps.setDouble(2, p.getPrice());
+            ps.setInt(3, p.getId());
+            ps.executeUpdate();
+            ps.close();
+        } catch (SQLException ex) {
+            System.getLogger(ProductDao.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+        }
+
+    }
+    
+    public void deleteProduct(int id) {
+
+        Product p = null;
+        try {
+            Statement stm = getConnection().createStatement();
+
+            ResultSet rsm = stm.executeQuery("Delete from products where id=" + id);
+
+           stm.close();
+        } catch (SQLException ex) {
+            System.getLogger(ProductDao.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+        }
+        //return p;
+    }
+    
+}
